@@ -5,10 +5,10 @@ Desmond Germans, 2019
 
 ## format coverage
 
-| format | load          | save                   | tested  | optimized |
-|--------|---------------|------------------------|---------|-----------|
-| BMP    | *coming soon* | rough RGBA to test PNG |         |           |
-| TGA    | *coming soon* | *coming soon*          |         |           |
-| PNG    | **yes**       | *coming soon*          | **yes** | a bit     |
-| JPEG   | *coming soon* | *coming soon*          |         |           |
-| GIF    | *coming soon* | *coming soon*          |         |           |
+| format | load          | save          | tested  | optimized |
+|--------|---------------|---------------|---------|-----------|
+| BMP    | *coming soon* | (to test PNG) |         |           |
+| TGA    | *coming soon* | *coming soon* |         |           |
+| PNG    | **yes**       | *coming soon* | **yes** | a bit     |
+| JPEG   | *coming soon* | *coming soon* |         |           |
+| GIF    | *coming soon* | *coming soon* |         |           |

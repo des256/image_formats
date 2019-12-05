@@ -4,7 +4,7 @@
 use crate::Image;
 
 pub fn test(_src: &[u8]) -> Option<(u32,u32)> {
-	None
+    None
 }
 
 pub fn load(_src: &[u8]) -> Result<Image,String> {
