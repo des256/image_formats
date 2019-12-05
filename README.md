@@ -5,10 +5,10 @@ Desmond Germans, 2019
 
 ## format coverage
 
-| format | load          | save          | tested  | optimized |
-|--------|---------------|---------------|---------|-----------|
-| BMP    | *coming soon* | (to test PNG) |         |           |
-| TGA    | *coming soon* | *coming soon* |         |           |
-| PNG    | **yes**       | *coming soon* | **yes** | a bit     |
-| JPEG   | *coming soon* | *coming soon* |         |           |
-| GIF    | *coming soon* | *coming soon* |         |           |
+format | load          | save          | tested  | optimized | remarks
+-------|---------------|---------------|---------|-----------|--------
+BMP    | *coming soon* | (to test PNG) |         |           |
+TGA    | *coming soon* | *coming soon* |         |           |
+PNG    | **yes**       | *coming soon* | **yes** | a bit     | some more exotic chunks are not implemented yet
+JPEG   | *coming soon* | *coming soon* |         |           |
+GIF    | *coming soon* | *coming soon* |         |           |
