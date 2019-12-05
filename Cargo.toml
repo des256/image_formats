@@ -1,0 +1,27 @@
+[package]
+name = "image_formats"
+version = "0.1.0"
+authors = ["Desmond Germans <desmond@germansmedia.nl>"]
+edition = "2018"
+
+[profile.dev]
+opt-level = 0
+debug = true
+lto = true
+codegen-units = 12
+
+[profile.release]
+opt-level = 2
+#debug = true
+debug = false
+lto = false
+codegen-units = 12
+
+[lib]
+name = "image_formats"
+crate-type = ["rlib"]
+
+[target.x86_64-unknown-linux-gnu.dependencies]
+libc = "0.2"
+#cpuprofiler = "0.0.4"
+glob = "0.3.0"
