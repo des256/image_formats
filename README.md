@@ -7,7 +7,7 @@ Desmond Germans, 2019
 
 format | load          | save          | tested  | optimized | remarks
 -------|---------------|---------------|---------|-----------|--------
-BMP    | *coming soon* | (to test PNG) |         |           |
+BMP    | **yes**       | (very basic)  | **yes** |           | some more exotic/old variants not implemented
 TGA    | *coming soon* | *coming soon* |         |           |
 PNG    | **yes**       | *coming soon* | **yes** | a bit     | some more exotic chunks are not implemented yet
 JPEG   | *coming soon* | *coming soon* |         |           |

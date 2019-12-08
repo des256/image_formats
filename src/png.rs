@@ -710,7 +710,7 @@ pub fn test(src: &[u8]) -> Option<(u32,u32)> {
                     (t == TYPE_C1) | (t == TYPE_C2) | (t == TYPE_C4) | (t == TYPE_C8) |
                     (t == TYPE_RGB8) | (t == TYPE_RGB16) |
                     (t == TYPE_RGBA8) | (t == TYPE_RGBA16) {
-                        return Some((width,height))
+                        return Some((width,height));
                 }
             }
             else if chunk_type == 0x49454E44 { // IEND
