@@ -12,3 +12,7 @@ TGA    | *coming soon* | *coming soon* |         |           |
 PNG    | **yes**       | *coming soon* | **yes** | a bit     | some more exotic chunks are not implemented yet
 JPEG   | *coming soon* | *coming soon* |         |           |
 GIF    | *coming soon* | *coming soon* |         |           |
+
+## But, but, my image doesn't work?!
+
+email it to me at desmond@germansmedia.nl
