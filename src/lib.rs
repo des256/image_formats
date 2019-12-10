@@ -9,3 +9,6 @@ pub mod png;
 pub mod jpeg;
 pub mod tga;
 pub mod gif;
+pub mod pbm;
+pub mod tiff;
+pub mod xbm;

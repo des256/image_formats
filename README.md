@@ -7,17 +7,17 @@ If you use this, mention my name somewhere, and also, do one good deed for your 
 
 ## format coverage
 
-format | load           | save           | tested  | optimized | remarks
--------|----------------|----------------|---------|-----------|--------
-BMP    | **yes**        | (very basic)   | **yes** |           | some more exotic/old variants not implemented
-PNG    | **yes**        | *coming soon*  | **yes** | a bit     | some more exotic chunks are not implemented yet
-JPEG   | *coming soon*  | *coming soon*  |         |           |
-GIF    | *coming later* | *coming later* |         |           |
-TGA    | *coming later* | *coming later* |         |           |
-PBM    | *coming later* | *coming later* |         |           |
-TIFF   | *coming later* | *coming later* |         |           |
-XBM    | *coming later* | *coming later* |         |           |
-WEBP   | *coming later* | *coming later* |         |           |
+format | load           | save          | tested  | optimization
+-------|----------------|---------------|---------|-------------
+BMP    | **yes**        | *in progress* | **yes** |
+PNG    | **yes**        | *soon*        | **yes** | improved huffman for LZ77
+JPEG   | *in progress*  | *soon*        |         |
+GIF    | *later*        | *later*       |         |
+TGA    | *later*        | *later*       |         |
+PBM    | *later*        | *later*       |         |
+TIFF   | *later*        | *later*       |         |
+XBM    | *later*        | *later*       |         |
+WEBP   | *later*        | *later*       |         |
 
 ## But, but, my image doesn't work?!
 
