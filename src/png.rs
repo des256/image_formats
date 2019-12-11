@@ -475,7 +475,7 @@ fn make_c(c: u32,gamma: f32) -> u32 {
     return (ua << 24) | (ur << 16) | (ug << 8) | ub;	
 }
 
-fn decode(dst: &mut [u32],src: &[u8],width: usize,height: usize,stride: usize,x0: usize,y0: usize,dx: usize,dy: usize,itype: u16,palette: &[u32; 256],gamma: f32) {
+fn decode_pixels(dst: &mut [u32],src: &[u8],width: usize,height: usize,stride: usize,x0: usize,y0: usize,dx: usize,dy: usize,itype: u16,palette: &[u32; 256],gamma: f32) {
     let mut sp = 0;
     match itype {
         TYPE_L1 => {
@@ -690,7 +690,7 @@ fn from_be32(src: &[u8]) -> u32 {
     ((src[0] as u32) << 24) | ((src[1] as u32) << 16) | ((src[2] as u32) << 8) | (src[3] as u32)
 }
 
-pub fn test(src: &[u8]) -> Option<(u32,u32)> {
+pub fn test(src: &[u8]) -> Option<(usize,usize)> {
     if (src[0] == 0x89) && (src[1] == 0x50) && (src[2] == 0x4E) && (src[3] == 0x47) && (src[4] == 0x0D) && (src[5] == 0x0A) && (src[6] == 0x1A) && (src[7] == 0x0A) {
         let mut sp: usize = 8;
         while sp < src.len() {
@@ -699,9 +699,9 @@ pub fn test(src: &[u8]) -> Option<(u32,u32)> {
             let chunk_type = from_be32(&src[sp..sp + 4]);
             sp += 4;
             if chunk_type == 0x49484452 { // IHDR
-                let width = from_be32(&src[sp..sp + 4]);
+                let width = from_be32(&src[sp..sp + 4]) as usize;
                 sp += 4;
-                let height = from_be32(&src[sp..sp + 4]);
+                let height = from_be32(&src[sp..sp + 4]) as usize;
                 sp += 4;
                 let t = from_be16(&src[sp..sp + 2]);
                 sp += 5;
@@ -725,7 +725,7 @@ pub fn test(src: &[u8]) -> Option<(u32,u32)> {
     None
 }
 
-pub fn load(src: &[u8]) -> Result<Image,String> {
+pub fn decode(src: &[u8]) -> Result<Image,String> {
     if (src[0] != 0x89) ||
         (src[1] != 0x50) ||
         (src[2] != 0x4E) ||
@@ -737,16 +737,16 @@ pub fn load(src: &[u8]) -> Result<Image,String> {
         return Err("invalid PNG".to_string());
     }
     let mut sp: usize = 8;
-    let mut width: u32 = 0;
-    let mut height: u32 = 0;
+    let mut width: usize = 0;
+    let mut height: usize = 0;
     let mut itype: u16 = 0;
     #[allow(unused_assignments)]
     let mut compression: u8 = 0;
     #[allow(unused_assignments)]
     let mut filter: u8 = 0;
     let mut interlace: u8 = 0;
-    let mut stride: u32 = 0;
-    let mut bpp: u8 = 0;
+    let mut stride: usize = 0;
+    let mut bpp: usize = 0;
     let mut need_plte = false;
     let mut plte_present = false;
     let mut zipped_data: Vec<u8> = vec![0; src.len()];
@@ -763,8 +763,8 @@ pub fn load(src: &[u8]) -> Result<Image,String> {
         sp += 4;
         match chunk_type {
             0x49484452 => { // IHDR
-                width = from_be32(&src[sp..]);
-                height = from_be32(&src[sp + 4..]);
+                width = from_be32(&src[sp..]) as usize;
+                height = from_be32(&src[sp + 4..]) as usize;
                 itype = from_be16(&src[sp + 8..]);
                 compression = src[sp + 10];
                 filter = src[sp + 11];
@@ -918,13 +918,13 @@ pub fn load(src: &[u8]) -> Result<Image,String> {
     }
 
     if interlace == 1 {
-        let ax0: [u32; 7] = [0,4,0,2,0,1,0];
-        let ay0: [u32; 7] = [0,0,4,0,2,0,1];
-        let adx: [u32; 7] = [8,8,4,4,2,2,1];
-        let ady: [u32; 7] = [8,8,8,4,4,2,2];
-        let mut awidth: [u32; 7] = [0; 7];
-        let mut aheight: [u32; 7] = [0; 7];
-        let mut astride: [u32; 7] = [0; 7];
+        let ax0: [usize; 7] = [0,4,0,2,0,1,0];
+        let ay0: [usize; 7] = [0,0,4,0,2,0,1];
+        let adx: [usize; 7] = [8,8,4,4,2,2,1];
+        let ady: [usize; 7] = [8,8,8,4,4,2,2];
+        let mut awidth: [usize; 7] = [0; 7];
+        let mut aheight: [usize; 7] = [0; 7];
+        let mut astride: [usize; 7] = [0; 7];
         let mut apresent: [bool; 7] = [false; 7];
         let mut adsize: [usize; 7] = [0; 7];
         let mut total_dsize = 0;
@@ -932,7 +932,7 @@ pub fn load(src: &[u8]) -> Result<Image,String> {
         for i in 0..7 {
             awidth[i] = (width + adx[i] - ax0[i] - 1) / adx[i];
             aheight[i] = (height + ady[i] - ay0[i] - 1) / ady[i];
-            astride[i] = match itype as u16 {
+            astride[i] = match itype {
                 TYPE_L1 => { (awidth[i] + 7) / 8 },
                 TYPE_C1 => { (awidth[i] + 7) / 8 },
                 TYPE_L2 => { (awidth[i] + 3) / 4 },
@@ -951,7 +951,7 @@ pub fn load(src: &[u8]) -> Result<Image,String> {
                 _ => { 0 },
             };
             apresent[i] = (awidth[i] != 0) && (aheight[i] != 0);
-            adsize[i] = if apresent[i] { ((astride[i] + 1) * aheight[i]) as usize } else { 0 };
+            adsize[i] = if apresent[i] { (astride[i] + 1) * aheight[i] } else { 0 };
             total_dsize += adsize[i];
             //println!("{}: size {}x{}, offset {},{}, step {},{}",i,awidth[i],aheight[i],ax0[i],ay0[i],adx[i],ady[i]);
         }
@@ -963,8 +963,8 @@ pub fn load(src: &[u8]) -> Result<Image,String> {
         let mut result = Image::new(width,height);
         for i in 0..7 {
             if apresent[i] {
-                let raw_data = unfilter(&filtered_data[sp..sp + adsize[i]],aheight[i] as usize,astride[i] as usize,bpp as usize);
-                decode(&mut result.data,&raw_data,awidth[i] as usize,aheight[i] as usize,width as usize,ax0[i] as usize,ay0[i] as usize,adx[i] as usize,ady[i] as usize,itype as u16,&palette,gamma);
+                let raw_data = unfilter(&filtered_data[sp..sp + adsize[i]],aheight[i],astride[i],bpp);
+                decode_pixels(&mut result.data,&raw_data,awidth[i],aheight[i],width,ax0[i],ay0[i],adx[i],ady[i],itype as u16,&palette,gamma);
                 sp += adsize[i];
             }
         }
@@ -973,19 +973,19 @@ pub fn load(src: &[u8]) -> Result<Image,String> {
     {
         //let after0 = Instant::now();
         
-        let filtered_data = match inflate(&zipped_data,((stride + 1) * height) as usize) {
+        let filtered_data = match inflate(&zipped_data,(stride + 1) * height) {
             Ok(data) => { data },
             Err(msg) => { return Err(msg); },
         };
         
         //let after_inflate = Instant::now();
         
-        let raw_data = unfilter(&filtered_data,height as usize,stride as usize,bpp as usize);
+        let raw_data = unfilter(&filtered_data,height,stride,bpp);
         
         //let after_unfilter = Instant::now();
         
         let mut result = Image::new(width,height);
-        decode(&mut result.data,&raw_data,width as usize,height as usize,width as usize,0,0,1,1,itype as u16,&palette,gamma);
+        decode_pixels(&mut result.data,&raw_data,width,height,width,0,0,1,1,itype as u16,&palette,gamma);
         
         //let after_decode = Instant::now();
 
@@ -1007,6 +1007,6 @@ pub fn load(src: &[u8]) -> Result<Image,String> {
     }
 }
 
-pub fn save(_image: &Image) -> Result<Vec<u8>,String> {
+pub fn encode(_image: &Image) -> Result<Vec<u8>,String> {
     Err("not implemented".to_string())
 }

@@ -13,11 +13,11 @@ pub fn main() {
     let mut buffer = Vec::new();
     infile.read_to_end(&mut buffer).unwrap();
     //PROFILER.lock().unwrap().start("profile").expect("Couldn't start");
-    let result = png::load(&buffer);
+    let result = png::decode(&buffer);
     //PROFILER.lock().unwrap().stop().expect("Couldn't stop");
     match result {
         Ok(image) => {
-            match bmp::save(&image) {
+            match bmp::encode(&image) {
                 Ok(value) => {
                     let mut outfile = File::create("output.bmp").unwrap();
                     outfile.write_all(&value).unwrap();

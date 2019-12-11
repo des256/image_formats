@@ -28,10 +28,10 @@ fn load(name: &str) {
     let mut infile = File::open(&name).unwrap();
     let mut buffer = Vec::new();
     infile.read_to_end(&mut buffer).unwrap();
-    match bmp::load(&buffer) {
+    match bmp::decode(&buffer) {
         Ok(image) => {
             let outname = (&name[0 .. name.len() - 4]).to_string() + "-out.bmp";
-            match bmp::save(&image) {
+            match bmp::encode(&image) {
                 Ok(value) => {
                     let mut outfile = File::create(&outname).unwrap();
                     outfile.write_all(&value).unwrap();

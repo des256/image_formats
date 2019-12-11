@@ -80,24 +80,24 @@ impl Component {
     }
 }
 
-pub fn decode(dst: &mut [u32],src: &[u8],width: u32,height: u32,bottom_up: bool,itype: u16,palette: &[u32; 256],redmask: u32,greenmask: u32,bluemask: u32,alphamask: u32) {
+pub fn decode_pixels(dst: &mut [u32],src: &[u8],width: usize,height: usize,bottom_up: bool,itype: u16,palette: &[u32; 256],redmask: u32,greenmask: u32,bluemask: u32,alphamask: u32) {
     let red = Component::new(redmask);
     let green = Component::new(greenmask);
     let blue = Component::new(bluemask);
     let alpha = Component::new(alphamask);
     let mut sp = 0usize;
-    let mut y = 0u32;
-    let mut dy = 1i32;
+    let mut y = 0usize;
+    let mut dy = 1isize;
     if bottom_up {
         y = height - 1;
         dy = -1;
     }
     let mut line = width * y;
-    let dline = width as i32 * dy;
+    let dline = (width as isize) * dy;
     match itype {
         TYPE_C1 => {
             for _l in 0..height {
-                let mut dp = line as usize;
+                let mut dp = line;
                 for _x in 0..width / 8 {
                     let d = src[sp];
                     sp += 1;
@@ -116,14 +116,14 @@ pub fn decode(dst: &mut [u32],src: &[u8],width: u32,height: u32,bottom_up: bool,
                 }
                 let rest = ((width + 7) / 8) & 3;
                 if rest > 0 {
-                    sp += (4 - rest) as usize;
+                    sp += 4 - rest;
                 }
-                line = (line as i32 + dline) as u32;
+                line = ((line as isize) + dline) as usize;
             }
         },
         TYPE_C2 => {
             for _l in 0..height {
-                let mut dp = line as usize;
+                let mut dp = line;
                 for _x in 0..width / 4 {
                     let d = src[sp];
                     sp += 1;
@@ -144,12 +144,12 @@ pub fn decode(dst: &mut [u32],src: &[u8],width: u32,height: u32,bottom_up: bool,
                 if rest > 0 {
                     sp += (4 - rest) as usize;
                 }
-                line = (line as i32 + dline) as u32;
+                line = (line as isize + dline) as usize;
             }
         },
         TYPE_C4 => {
             for _l in 0..height {
-                let mut dp = line as usize;
+                let mut dp = line;
                 for _x in 0..width / 2 {
                     let d = src[sp];
                     sp += 1;
@@ -167,31 +167,31 @@ pub fn decode(dst: &mut [u32],src: &[u8],width: u32,height: u32,bottom_up: bool,
                 if rest > 0 {
                     sp += (4 - rest) as usize;
                 }
-                line = (line as i32 + dline) as u32;
+                line = (line as isize + dline) as usize;
             }
         },
         TYPE_C4_RLE => {
-            let mut x = 0u32;
+            let mut x = 0usize;
             while sp < src.len() {
                 let code: u16 = from_le16(&src[sp..sp+2]);
                 sp += 2;
                 match code {
                     0x0000 => {
                         x = 0;
-                        y = ((y as i32) + dy) as u32;
+                        y = ((y as isize) + dy) as usize;
                     },
                     0x0100 => {
                         break;
                     },
                     0x0200 => {
-                        x += src[sp] as u32;
-                        y = ((y as i32) + (src[sp + 1] as i32) * dy) as u32;
+                        x += src[sp] as usize;
+                        y = ((y as isize) + (src[sp + 1] as isize) * dy) as usize;
                         sp += 2;
                     },
                     _ => {
                         if (code & 255) != 0 {
                             let count = code & 255;
-                            if x + count as u32 > width {
+                            if x + (count as usize) > width {
                                 break;
                             }
                             let c0 = palette[(code >> 12) as usize];
@@ -208,31 +208,31 @@ pub fn decode(dst: &mut [u32],src: &[u8],width: u32,height: u32,bottom_up: bool,
                         }
                         else {
                             let count = code >> 8;
-                            if x + count as u32 > width {
+                            if x + (count as usize) > width {
                                 break;
                             }
                             for _i in 0..count / 4 {
                                 let c = from_le16(&src[sp..sp+2]);
                                 sp += 2;
-                                dst[(y * width + x) as usize] = palette[((c >> 4) & 15) as usize];
-                                dst[(y * width + x + 1) as usize] = palette[(c & 15) as usize];
-                                dst[(y * width + x + 2) as usize] = palette[(c >> 12) as usize];
-                                dst[(y * width + x + 3) as usize] = palette[((c >> 8) & 15) as usize];
+                                dst[y * width + x] = palette[((c >> 4) & 15) as usize];
+                                dst[y * width + x + 1] = palette[(c & 15) as usize];
+                                dst[y * width + x + 2] = palette[(c >> 12) as usize];
+                                dst[y * width + x + 3] = palette[((c >> 8) & 15) as usize];
                                 x += 4;
                             }
                             if (count & 3) != 0 {
                                 let c = from_le16(&src[sp..sp+2]);
                                 sp += 2;
                                 if (count & 3) >= 1 {
-                                    dst[(y * width + x) as usize] = palette[((c >> 4) & 15) as usize];
+                                    dst[y * width + x] = palette[((c >> 4) & 15) as usize];
                                     x += 1;
                                 }
                                 if (count & 3) >= 2 {
-                                    dst[(y * width + x) as usize] = palette[(c & 15) as usize];
+                                    dst[y * width + x] = palette[(c & 15) as usize];
                                     x += 1;
                                 }
                                 if (count & 3) >= 3 {
-                                    dst[(y * width + x) as usize] = palette[(c >> 12) as usize];
+                                    dst[y * width + x] = palette[(c >> 12) as usize];
                                     x += 1;
                                 }
                             }
@@ -245,7 +245,7 @@ pub fn decode(dst: &mut [u32],src: &[u8],width: u32,height: u32,bottom_up: bool,
             for _l in 0..height {
                 let mut dp = line;
                 for _x in 0..width {
-                    dst[dp as usize] = palette[src[sp] as usize];
+                    dst[dp] = palette[src[sp] as usize];
                     sp += 1;
                     dp += 1;
                 }
@@ -253,55 +253,55 @@ pub fn decode(dst: &mut [u32],src: &[u8],width: u32,height: u32,bottom_up: bool,
                 if rest > 0 {
                     sp += (4 - rest) as usize;
                 }
-                line = (line as i32 + dline) as u32;
+                line = (line as isize + dline) as usize;
             }
         },
         TYPE_C8_RLE => {
-            let mut x = 0u32;
+            let mut x = 0usize;
             while sp < src.len() {
                 let code: u16 = from_le16(&src[sp..sp+2]);
                 sp += 2;
                 match code {
                     0x0000 => {
                         x = 0;
-                        y = ((y as i32) + dy) as u32;
+                        y = ((y as isize) + dy) as usize;
                     },
                     0x0100 => {
                         break;
                     },
                     0x0200 => {
-                        x += src[sp] as u32;
-                        y = ((y as i32) + (src[sp + 1] as i32) * dy) as u32;
+                        x += src[sp] as usize;
+                        y = ((y as isize) + (src[sp + 1] as isize) * dy) as usize;
                         sp += 2;
                     },
                     _ => {
                         if (code & 255) != 0 {
                             let count = code & 255;
-                            if x + count as u32 > width {
+                            if x + count as usize > width {
                                 break;
                             }
                             let c = palette[(code >> 8) as usize];
                             for _i in 0..count {
-                                dst[(y * width + x) as usize] = c;
+                                dst[y * width + x] = c;
                                 x += 1;
                             }
                         }
                         else {
                             let count = code >> 8;
-                            if x + count as u32 > width {
+                            if x + count as usize > width {
                                 break;
                             }
                             for _i in 0..count / 2 {
-                                let c = from_le16(&src[sp..sp+2]);
+                                let c = from_le16(&src[sp..sp + 2]);
                                 sp += 2;
-                                dst[(y * width + x) as usize] = palette[(c & 255) as usize];
-                                dst[(y * width + x + 1) as usize] = palette[(c >> 8) as usize];
+                                dst[y * width + x] = palette[(c & 255) as usize];
+                                dst[y * width + x + 1] = palette[(c >> 8) as usize];
                                 x += 2;
                             }
                             if (count & 1) != 0 {
-                                let c = from_le16(&src[sp..sp+2]);
+                                let c = from_le16(&src[sp..sp + 2]);
                                 sp += 2;
-                                dst[(y * width + x) as usize] = palette[(c & 255) as usize];
+                                dst[y * width + x] = palette[(c & 255) as usize];
                                 x += 1;
                             }
                         }
@@ -311,7 +311,7 @@ pub fn decode(dst: &mut [u32],src: &[u8],width: u32,height: u32,bottom_up: bool,
         },
         TYPE_A1RGB5 => {
             for _l in 0..height {
-                let mut dp = line as usize;
+                let mut dp = line;
                 for _x in 0..width {
                     let d = from_le16(&src[sp..sp+2]);
                     sp += 2;
@@ -328,16 +328,16 @@ pub fn decode(dst: &mut [u32],src: &[u8],width: u32,height: u32,bottom_up: bool,
                 }
                 let rest = (width * 2) & 3;
                 if rest > 0 {
-                    sp += (4 - rest) as usize;
+                    sp += 4 - rest;
                 }
-                line = (line as i32 + dline) as u32;
+                line = (line as isize + dline) as usize;
             }
         },
         TYPE_B16 => {
             for _l in 0..height {
-                let mut dp = line as usize;
+                let mut dp = line;
                 for _x in 0..width {
-                    let d = from_le16(&src[sp..sp+2]) as u32;
+                    let d = from_le16(&src[sp..sp + 2]) as u32;
                     sp += 2;
                     let r = red.get(d,0);
                     let g = green.get(d,0);
@@ -350,12 +350,12 @@ pub fn decode(dst: &mut [u32],src: &[u8],width: u32,height: u32,bottom_up: bool,
                 if rest > 0 {
                     sp += (4 - rest) as usize;
                 }
-                line = (line as i32 + dline) as u32;
+                line = (line as isize + dline) as usize;
             }
         },
         TYPE_RGB8 => {
             for _l in 0..height {
-                let mut dp = line as usize;
+                let mut dp = line;
                 for _x in 0..width {
                     let b = src[sp];
                     let g = src[sp + 1];
@@ -368,7 +368,7 @@ pub fn decode(dst: &mut [u32],src: &[u8],width: u32,height: u32,bottom_up: bool,
                 if rest > 0 {
                     sp += (4 - rest) as usize;
                 }
-                line = (line as i32 + dline) as u32;
+                line = (line as isize + dline) as usize;
             }
         },
         TYPE_ARGB8 => {
@@ -384,7 +384,7 @@ pub fn decode(dst: &mut [u32],src: &[u8],width: u32,height: u32,bottom_up: bool,
                     dst[dp] = ((a as u32) << 24) | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32);
                     dp += 1;
                 }
-                line = (line as i32 + dline) as u32;
+                line = (line as isize + dline) as usize;
             }
         },
         TYPE_B32 => {
@@ -400,14 +400,14 @@ pub fn decode(dst: &mut [u32],src: &[u8],width: u32,height: u32,bottom_up: bool,
                     dst[dp] = ((a as u32) << 24) | ((r as u32) << 16) | ((g as u32) << 8) | (b as u32);
                     dp += 1;
                 }
-                line = (line as i32 + dline) as u32;
+                line = (line as isize + dline) as usize;
             }
         },
         _ => { },
     }
 }
 
-pub fn test(src: &[u8]) -> Option<(u32,u32)> {
+pub fn test(src: &[u8]) -> Option<(usize,usize)> {
     let tag = from_le16(&src[0..2]);
     if (tag == 0x4D42) ||   // BM (Windows BMP)
         (tag == 0x4142) ||  // BA (OS/2 bitmap)
@@ -430,10 +430,10 @@ pub fn test(src: &[u8]) -> Option<(u32,u32)> {
             return None;
         }
         if headersize == 12 {
-            let width = from_le16(&src[18..20]);
-            let mut height = from_le16(&src[20..22]);
+            let width = from_le16(&src[18..20]) as usize;
+            let mut height = from_le16(&src[20..22]) as usize;
             if (height as i16) < 0 {
-                height = -(height as i16) as u16;
+                height = -(height as i16) as usize;
             }
             if (width > 32768) || (height > 32768) || (width == 0) || (height == 0) {
                 return None;
@@ -454,16 +454,16 @@ pub fn test(src: &[u8]) -> Option<(u32,u32)> {
             if rest > 0 {
                 line += 4 - rest;
             }
-            if offset as usize + (height * line) as usize > src.len() {
+            if offset as usize + height * line > src.len() {
                 return None;
             }
-            return Some((width as u32,height as u32));
+            return Some((width,height));
         }
         else {
-            let width = from_le32(&src[18..22]);
-            let mut height = from_le32(&src[22..26]);
+            let width = from_le32(&src[18..22]) as usize;
+            let mut height = from_le32(&src[22..26]) as usize;
             if (height as i32) < 0 {
-                height = -(height as i32) as u32;
+                height = -(height as i32) as usize;
             }
             if (width > 32768) || (height > 32768) || (width == 0) || (height == 0) {
                 return None;
@@ -488,7 +488,7 @@ pub fn test(src: &[u8]) -> Option<(u32,u32)> {
             if rest > 0 {
                 line += 4 - rest;
             }
-            if (line != 0) && (offset as usize + (height * line) as usize > src.len()) {
+            if (line != 0) && (offset as usize + height * line > src.len()) {
                 return None;
             }
             return Some((width,height));
@@ -497,7 +497,7 @@ pub fn test(src: &[u8]) -> Option<(u32,u32)> {
     None
 }
 
-pub fn load(src: &[u8]) -> Result<Image,String> {
+pub fn decode(src: &[u8]) -> Result<Image,String> {
     let tag = from_le16(&src[0..2]);
     if (tag != 0x4D42) &&
         (tag != 0x4142) &&
@@ -522,9 +522,9 @@ pub fn load(src: &[u8]) -> Result<Image,String> {
         return Err("Invalid BMP".to_string());
     }
     #[allow(unused_assignments)]
-    let mut width = 0u32;
+    let mut width = 0usize;
     #[allow(unused_assignments)]
-    let mut height = 0u32;
+    let mut height = 0usize;
     let mut bottom_up = true;
     #[allow(unused_assignments)]
     let mut itype = 0u16;
@@ -534,9 +534,9 @@ pub fn load(src: &[u8]) -> Result<Image,String> {
     let mut bluemask = 0u32;
     let mut alphamask = 0u32;
     if headersize == 12 {
-        width = from_le16(&src[18..20]) as u32;
+        width = from_le16(&src[18..20]) as usize;
         let pheight = from_le16(&src[20..22]) as i16;
-        height = if pheight < 0 { bottom_up = false; -pheight as u32 } else { pheight as u32 };
+        height = if pheight < 0 { bottom_up = false; -pheight as usize } else { pheight as usize };
         if (width > 32768) || (height > 32768) || (width == 0) || (height == 0) {
             return Err("Invalid BMP".to_string());
         }
@@ -561,9 +561,9 @@ pub fn load(src: &[u8]) -> Result<Image,String> {
         }
     }
     else {
-        width = from_le32(&src[18..22]);
+        width = from_le32(&src[18..22]) as usize;
         let pheight = from_le32(&src[22..26]) as i32;
-        height = if pheight < 0 { bottom_up = false; -pheight as u32 } else { pheight as u32 };
+        height = if pheight < 0 { bottom_up = false; -pheight as usize } else { pheight as usize };
         if (width > 32768) || (height > 32768) || (width == 0) || (height == 0) {
             return Err("Invalid BMP".to_string());
         }
@@ -630,7 +630,7 @@ pub fn load(src: &[u8]) -> Result<Image,String> {
         }
     }
     let mut image = Image::new(width,height);
-    decode(&mut image.data,&src[offset as usize..],width,height,bottom_up,itype,&palette,redmask,greenmask,bluemask,alphamask);
+    decode_pixels(&mut image.data,&src[offset as usize..],width,height,bottom_up,itype,&palette,redmask,greenmask,bluemask,alphamask);
     Ok(image)
 }
 
@@ -664,7 +664,7 @@ impl WriteTypes for Vec<u8> {
     }
 }
 
-pub fn save(image: &Image) -> Result<Vec<u8>,String> {
+pub fn encode(image: &Image) -> Result<Vec<u8>,String> {
     let headersize = 108;
     let stride = image.width * 4;
     let palettesize = 0;
@@ -680,16 +680,16 @@ pub fn save(image: &Image) -> Result<Vec<u8>,String> {
     let filesize = offset + imagesize;
     let mut dst: Vec<u8> = Vec::new();
     dst.push16b(0x424D);  // 0
-    dst.push32(filesize);  // 2
+    dst.push32(filesize as u32);  // 2
     dst.push32(0);  // 6
-    dst.push32(offset);  // 10
-    dst.push32(headersize);  // 14
-    dst.push32(image.width);  // 18
+    dst.push32(offset as u32);  // 10
+    dst.push32(headersize as u32);  // 14
+    dst.push32(image.width as u32);  // 18
     dst.push32(-(image.height as i32) as u32);  // 22
     dst.push16(1);  // 26
     dst.push16(bpp);  // 28
     dst.push32(compression);  // 30
-    dst.push32(imagesize);  // 34
+    dst.push32(imagesize as u32);  // 34
     dst.push32(1);  // 38
     dst.push32(1);  // 42
     dst.push32(colors);  // 46
@@ -713,7 +713,7 @@ pub fn save(image: &Image) -> Result<Vec<u8>,String> {
     dst.push32(0);  // 118
     for y in 0..image.height {
         for x in 0..image.width {
-            dst.push32(image.data[(y * image.width + x) as usize]);  // 122..
+            dst.push32(image.data[y * image.width + x]);  // 122..
         }
     }
     Ok(dst)
